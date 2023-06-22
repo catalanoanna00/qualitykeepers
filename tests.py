@@ -48,24 +48,28 @@ def process_json():
 # add parameter to process json from a specific document 
 # for now, we are hard-coding the document that we are pulling from 
 
-    file_name = '/Users/family/Desktop/quads/quants-main/backend/bot/dev-v2.0.json'
+    file_name = '/Users/family/Desktop/quads/quants-main/dev-v2.0.json'
 
     with open(file_name, "r") as fid:
         data = json.load(fid)
 
     data_list = []
-    for i in range(len(data['data'][1]['paragraphs'])):
-        temp_dict = {'context':'',
+    
+
+    for k in range(len(data['data'])):
+
+        for i in range(len(data['data'][k]['paragraphs'])):
+            temp_dict = {'context':'',
                     'question':[],
                     'id':[]}
         
-        temp_dict['context'] = data['data'][1]['paragraphs'][i]['context']
+            temp_dict['context'] = data['data'][k]['paragraphs'][i]['context']
 
-        for j in range(len(data['data'][1]['paragraphs'][i]['qas'])):
-            temp_dict['question'].append(data['data'][1]['paragraphs'][i]['qas'][j]['question'])
-            temp_dict['id'].append(data['data'][1]['paragraphs'][i]['qas'][j]['id'])
+            for j in range(len(data['data'][k]['paragraphs'][i]['qas'])):
+                temp_dict['question'].append(data['data'][k]['paragraphs'][i]['qas'][j]['question'])
+                temp_dict['id'].append(data['data'][k]['paragraphs'][i]['qas'][j]['id'])
 
-        data_list.append(temp_dict)
+            data_list.append(temp_dict)
 
     return data_list
 
@@ -97,34 +101,36 @@ def upload_source_doc(my_file):
     queryset = SourceDocument.objects.all()
     return queryset
 
+'''
+Return the answer to a question with given context in json format 
+context: 
+question:
+answer: 
+'''
+def get_answers_json(input_files):
+    data_set = {}
+
+    for f in input_files:
+        query = upload_source_doc(f['context'])
+        questions = f['question']
+        id = f['id']
+
+        for i in range(len(questions)):
+            val_ans, orig_ans, snips = qa.process_query(query, questions[i])
+            data_set[id[i]] = val_ans
+            
+    with open('/Users/family/Desktop/quads/quants-main/quads-test.json', "w") as json_file:
+        json.dump(data_set, json_file)
+    #return ans
+
 
 
 
 # TESTING ****************************************************************************************
 
 input_files = process_json()
-
-context_list = []
-
-# get list of just context 
-for f in input_files:
-    context_list.append(f['context'])
-
-query = upload_source_doc(context_list[3]) # upload arbitrary doc
-questions = input_files[3]['question'] # list of questions for the doc
-
-# Text 
-print(questions[0])
-print(context_list[3])
-print(query)
-
-
-# try to process the query 
-val_ans, orig_ans, snips = qa.process_query(query, questions[0])
-
-print(val_ans)
-print(orig_ans)
-
+get_answers_json(input_files)
+    
 print('End of Execution')
 
 
