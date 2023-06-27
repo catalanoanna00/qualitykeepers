@@ -13,6 +13,7 @@ import json
 import os
 import django
 from dotenv import load_dotenv, find_dotenv
+import time
 
 from django.db import models
 
@@ -55,21 +56,22 @@ def process_json():
 
     data_list = []
     
+    #k_range = len(data['data']) // 2
+   # k_range = 1
+    #for k in range(k_range):
 
-    for k in range(len(data['data'])):
-
-        for i in range(len(data['data'][k]['paragraphs'])):
-            temp_dict = {'context':'',
-                    'question':[],
-                    'id':[]}
+    for i in range(len(data['data'][1]['paragraphs'])):
+        temp_dict = {'context':'',
+                'question':[],
+                'id':[]}
         
-            temp_dict['context'] = data['data'][k]['paragraphs'][i]['context']
+        temp_dict['context'] = data['data'][1]['paragraphs'][i]['context']
 
-            for j in range(len(data['data'][k]['paragraphs'][i]['qas'])):
-                temp_dict['question'].append(data['data'][k]['paragraphs'][i]['qas'][j]['question'])
-                temp_dict['id'].append(data['data'][k]['paragraphs'][i]['qas'][j]['id'])
+        for j in range(len(data['data'][1]['paragraphs'][i]['qas'])):
+            temp_dict['question'].append(data['data'][1]['paragraphs'][i]['qas'][j]['question'])
+            temp_dict['id'].append(data['data'][1]['paragraphs'][i]['qas'][j]['id'])
 
-            data_list.append(temp_dict)
+        data_list.append(temp_dict)
 
     return data_list
 
@@ -110,19 +112,27 @@ answer:
 def get_answers_json(input_files):
     data_set = {}
 
-    for f in input_files:
+    q_count = 0
+    for f in input_files[:1]:
         query = upload_source_doc(f['context'])
         questions = f['question']
         id = f['id']
 
         for i in range(len(questions)):
+            q_count += 1
             val_ans, orig_ans, snips = qa.process_query(query, questions[i])
             data_set[id[i]] = val_ans
+
+            print(questions[i])
+            print(val_ans)
+
+            if q_count % 50 == 0: 
+                print('entered')
+                time.sleep(10)
             
     with open('/Users/family/Desktop/quads/quants-main/quads-test.json', "w") as json_file:
         json.dump(data_set, json_file)
     #return ans
-
 
 
 
